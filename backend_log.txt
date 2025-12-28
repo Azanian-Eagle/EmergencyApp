@@ -1,0 +1,9 @@
+Server is running on http://localhost:3000
+--- EMERGENCY ALERT RECEIVED ---
+{
+  "location": "123,456"
+}
+--- EMERGENCY ALERT RECEIVED ---
+{
+  "location": "123,456"
+}

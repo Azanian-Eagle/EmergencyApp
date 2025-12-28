@@ -1,0 +1,64 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+// In-memory storage (mock database)
+let contacts = [];
+let alerts = [];
+
+// API Routes
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date() });
+});
+
+// Get contacts
+app.get('/api/contacts', (req, res) => {
+    res.json(contacts);
+});
+
+// Add contact
+app.post('/api/contacts', (req, res) => {
+    const contact = req.body;
+    if (!contact.name || (!contact.phone && !contact.email)) {
+        return res.status(400).json({ error: 'Name and either phone or email are required' });
+    }
+    contact.id = Date.now().toString();
+    contacts.push(contact);
+    res.status(201).json(contact);
+});
+
+// Trigger Alert
+app.post('/api/alert', (req, res) => {
+    const alertData = req.body;
+    console.log('--- EMERGENCY ALERT RECEIVED ---');
+    console.log(JSON.stringify(alertData, null, 2));
+
+    // In a real app, this would trigger SMS/Email dispatch
+    alerts.push({
+        ...alertData,
+        receivedAt: new Date(),
+        status: 'dispatched' // Simulated dispatch
+    });
+
+    res.json({ success: true, message: 'Alert dispatched to contacts' });
+});
+
+// Serve frontend static files (production)
+// We will assume frontend build goes to ../frontend/dist
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+app.get('/:any', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
