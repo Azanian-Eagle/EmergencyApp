@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,20 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+// Rate Limiting
+// Limit each IP to 100 requests per 15 minutes window
+// This protects against DoS attacks and spam
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: { error: 'Too many requests, please try again later.' }
+});
+
+// Apply rate limiting to all requests starting with /api
+app.use('/api', limiter);
 
 // In-memory storage (mock database)
 let contacts = [];
