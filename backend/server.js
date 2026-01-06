@@ -68,7 +68,20 @@ app.post('/api/alert', (req, res) => {
 
 // Serve frontend static files (production)
 // We will assume frontend build goes to ../frontend/dist
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// Bolt Optimization: Add strict caching for hashed assets (immutable) and no-cache for HTML/SW
+// This significantly reduces load times for repeat visits
+app.use(express.static(path.join(__dirname, '../frontend/dist'), {
+    setHeaders: (res, filePath) => {
+        // Check for 'assets' directory in path (handles both forward and backslashes)
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+            // Hashed assets (JS/CSS/Images) - Cache forever
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else {
+            // HTML, Service Workers, Manifests - Do not cache
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 app.get('/:any', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
