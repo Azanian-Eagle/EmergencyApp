@@ -68,7 +68,17 @@ app.post('/api/alert', (req, res) => {
 
 // Serve frontend static files (production)
 // We will assume frontend build goes to ../frontend/dist
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../frontend/dist'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.includes('/assets/')) {
+            // Cache hashed assets for 1 year
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else {
+            // Do not cache other files (index.html, etc.) to ensure updates are seen
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 app.get('/:any', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
