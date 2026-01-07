@@ -52,16 +52,33 @@ app.post('/api/contacts', (req, res) => {
 
 // Trigger Alert
 app.post('/api/alert', (req, res) => {
-    const alertData = req.body;
+    const { location, media, timestamp } = req.body;
+
+    // Strict Input Validation (Sentinel Security Fix)
+    if (!location || typeof location !== 'object' || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+        return res.status(400).json({ error: 'Invalid location data' });
+    }
+    if (!timestamp || isNaN(Date.parse(timestamp))) {
+        return res.status(400).json({ error: 'Invalid timestamp' });
+    }
+    // Optional media validation
+    if (media && (typeof media !== 'object')) {
+        return res.status(400).json({ error: 'Invalid media format' });
+    }
+
+    const sanitizedAlert = {
+        location: { lat: location.lat, lng: location.lng }, // Whitelist fields
+        media: media ? { audio: media.audio, video: media.video } : null,
+        timestamp,
+        receivedAt: new Date(),
+        status: 'dispatched'
+    };
+
     console.log('--- EMERGENCY ALERT RECEIVED ---');
-    console.log(JSON.stringify(alertData, null, 2));
+    console.log(JSON.stringify(sanitizedAlert, null, 2));
 
     // In a real app, this would trigger SMS/Email dispatch
-    alerts.push({
-        ...alertData,
-        receivedAt: new Date(),
-        status: 'dispatched' // Simulated dispatch
-    });
+    alerts.push(sanitizedAlert);
 
     res.json({ success: true, message: 'Alert dispatched to contacts' });
 });
