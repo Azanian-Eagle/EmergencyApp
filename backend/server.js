@@ -41,11 +41,26 @@ app.get('/api/contacts', (req, res) => {
 
 // Add contact
 app.post('/api/contacts', (req, res) => {
-    const contact = req.body;
-    if (!contact.name || (!contact.phone && !contact.email)) {
-        return res.status(400).json({ error: 'Name and either phone or email are required' });
+    const { name, phone, email } = req.body;
+
+    // Input Validation
+    if (!name || typeof name !== 'string' || name.length > 100) {
+        return res.status(400).json({ error: 'Invalid name (must be string, max 100 chars)' });
     }
-    contact.id = Date.now().toString();
+
+    if (!phone && !email) {
+        return res.status(400).json({ error: 'Either phone or email is required' });
+    }
+
+    if (phone && (typeof phone !== 'string' || phone.length > 20)) {
+        return res.status(400).json({ error: 'Invalid phone (must be string, max 20 chars)' });
+    }
+
+    if (email && (typeof email !== 'string' || email.length > 100)) {
+        return res.status(400).json({ error: 'Invalid email (must be string, max 100 chars)' });
+    }
+
+    const contact = { name, phone, email, id: Date.now().toString() };
     contacts.push(contact);
     res.status(201).json(contact);
 });
